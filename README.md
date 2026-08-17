@@ -8,6 +8,8 @@ A running Vault server on your own computer, where you'll store a "secret" (a fa
 
 By the end, you've hands-on demonstrated all four PAM pillars in a real, running system: vaulting a credential instead of leaving it in plain text, retrieving it through a controlled interface instead of direct access, issuing just-in-time, expiring access instead of standing permanent access, and generating a genuine audit log of every access event — the same core architecture CyberArk implements at enterprise scale.
 
+Note: Eventually you'll get angry trying this project, even i got. but trying out this will give you a experience. 
+
 ## Step 1 — Install HashiCorp Vault
 
 On Windows:
@@ -149,24 +151,128 @@ Go back to your first terminal window (the one still running vault server -dev) 
 - Added these 4 things:
 
 
-  Create two identities: admin, operator
+Create two identities: 
+      
+    admin, operator
 
-  Give them different Vault policies: Admin can manage the secret; Operator can retrieve it but cannot modify it.
+Give them different Vault policies: 
 
-  Demonstrate token lifecycle
+    Admin can manage the secret; Operator can retrieve it but cannot modify it.
 
-     Login/authenticate
+Demonstrate token lifecycle
 
-     Receive token
-Use token
-Show TTL/expiration
-Let it expire or revoke it
-Demonstrate that access subsequently fails.
+    Login/authenticate
+    Receive token
+    Use token
+    Show TTL/expiration
+    Let it expire or revoke it
+    Demonstrate that access subsequently fails.
 Show the audit trail
-Authentication event
-Secret read
-Token issuance/use
-Failed unauthorized attempt
-Token revocation/expiration
 
-can i implement this suggestion in this project
+    Authentication event
+    Secret read
+    Token issuance/use
+    Failed unauthorized attempt
+    Token revocation/expiration
+
+- Here's how each piece maps to the UI (http://127.0.0.1:8200, logged in with your Root Token):
+
+1. Create the two policies
+
+
+Left sidebar → Policies → ACL Policies → Create ACL policy
+
+
+Name it admin-policy, paste in the same HCL from before:
+
+    path "secret/data/database-admin" {
+      capabilities = ["create", "read", "update", "delete"]
+    }
+Save. Repeat for operator-policy with:
+
+    path "secret/data/database-admin" {
+      capabilities = ["read"]
+    }
+
+
+2. Create the two identities (tokens)
+
+In your second terminal window (with Root Token active):
+
+    vault token create -policy="admin-policy" -display-name="admin-user" -ttl=5m
+
+Copy the token it prints.
+
+    vault token create -policy="operator-policy" -display-name="operator-user" -ttl=3m
+
+Copy this one too.
+
+Then back in the browser:
+
+   Sign out of the UI (top-right menu).
+  
+   On the login screen, paste the operator token as the credential → sign in.
+   
+   Browse to Secrets → secret/ → database-admin → confirm you can view it but editing/saving fails.
+   
+   Sign out, sign back in with the admin token → confirm editing succeeds.
+
+3. Demonstrate access differences
+
+  Do this step in the CLI, as the UI doesn't offer this step
+- Log in using the operator token as the credential and type:
+
+      vault kv get secret/database-admin
+  Should get an error or permission denied
+
+- Try editing/saving it →
+
+      vault kv put secret/database-admin username="dbadmin" password="SuperSecretPassword1234"
+   should get an error or permission denied
+  
+- Log out by & log back in with the admin token
+
+      set VAULT_TOKEN=paste_admin_token
+
+  → try editing → it succeeds.
+
+4. Token lifecycle (TTL + revocation)
+
+Part A: You've already covered expiration. Since you set -ttl=2m and -ttl=5m and tested logging in after they ran out — that's the "let it expire" half of Step 4 already done. ✅
+
+Part B: Now demonstrate manual revocation (the other half)
+
+This is different from expiration — instead of waiting for a token to die naturally, an admin actively kills it early (e.g., if someone's laptop was stolen, or their access needs to be cut immediately).
+
+1. Create a fresh token to revoke (so you're not reusing an already-expired one):
+
+       vault token create -policy="operator-policy" -display-name="operator-user-2" -ttl=1h
+
+Copy this new token. Notice the TTL is long (1 hour) — the point here is proving revocation kills it immediately, not because it expired.
+
+2. Confirm it currently works — log into via CLI:
+
+       set VAULT_TOKEN=paste_new_operator_token
+       vault kv get secret/database-admin
+
+→ should succeed.
+
+3. Switch back to Root Token, then revoke it:
+
+       set VAULT_TOKEN=paste_your_root_token
+       vault token revoke paste_new_operator_token
+
+4. Prove access now fails — switch back to the revoked token and try again:
+
+       set VAULT_TOKEN=paste_new_operator_token
+       vault kv get secret/database-admin
+
+→ should now fail with permission denied / invalid token — even though its TTL (1 hour) hadn't run out yet. This is the key proof: revocation cuts access instantly, regardless of remaining TTL
+
+5. Audit trail
+
+This part is CLI-only — Vault's dev-mode UI doesn't have a built-in log viewer for the audit file. You'd still need to enable it via CLI (Step 7) and read vault-audit.log in Notepad/cat, even if everything else was done through the browser. The UI actions still get logged to that same file, since audit logging captures all access regardless of whether it came from CLI or UI.
+
+I've also created entities, groups but it is a long process and above my project definition. But I have uploaded the workflow of what i did everything till above this project definition. Check that too.
+
+# Note: Eventually you'll get angry trying this project, even i got. but trying out this will give you a experience. 
