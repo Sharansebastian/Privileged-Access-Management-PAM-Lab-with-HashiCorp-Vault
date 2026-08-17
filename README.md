@@ -6,7 +6,7 @@ As a beginner and intermediate learner in IAM, Initially the plan was to build a
 # What I / you'll build:
 A running Vault server on your own computer, where you'll store a "secret" (a fake privileged password), retrieve it through the proper controlled process (not just reading a file), watch Vault issue you a temporary access token, and review the audit log of everything that happened — recreating the Vault + CPM + PSM logging concepts.
 
-By the end, you've hands-on demonstrated all four PAM pillars in a real, running system: vaulting a credential instead of leaving it in plain text, retrieving it through a controlled interface instead of direct access, issuing just-in-time, expiring access instead of standing permanent access, and generating a genuine audit log of every access event — the same core architecture CyberArk (Chapter 20) implements at enterprise scale.
+By the end, you've hands-on demonstrated all four PAM pillars in a real, running system: vaulting a credential instead of leaving it in plain text, retrieving it through a controlled interface instead of direct access, issuing just-in-time, expiring access instead of standing permanent access, and generating a genuine audit log of every access event — the same core architecture CyberArk implements at enterprise scale.
 
 ## Step 1 — Install HashiCorp Vault
 
@@ -79,7 +79,7 @@ In this new window, tell it where your Vault server is and log in using the Root
 
 - Let's pretend this is a database admin password that needs vaulting. Type:
 
-vault kv put secret/database-admin username="dbadmin" password="SuperSecretPassword123"
+      vault kv put secret/database-admin username="dbadmin" password="SuperSecretPassword123"
 
 - Press Enter. Vault confirms it was stored, encrypted, inside the vault — this is the exact same concept as CyberArk's Digital Vault
 
@@ -87,7 +87,7 @@ vault kv put secret/database-admin username="dbadmin" password="SuperSecretPassw
 
 - Instead of a person just knowing this password, they'd request it through Vault when needed. Type:
 
-vault kv get secret/database-admin
+      vault kv get secret/database-admin
 
 - You'll see the username and password printed back — this simulates the controlled retrieval process. Notice: unlike a password sitting visibly in a text file, this retrieval just got logged automatically (you'll see this in Step 7).
 
@@ -95,7 +95,7 @@ vault kv get secret/database-admin
 
 - This recreates the JIT concept from Chapter 19 — instead of permanent access, you'll create a token that self-destructs after a short time window. Type:
 
-vault token create -ttl=2m
+      vault token create -ttl=2m
 
 - This creates a brand-new access token that automatically expires in 2 minutes. Copy the new token it prints out.
 
@@ -114,3 +114,59 @@ vault token create -ttl=2m
       export VAULT_TOKEN=paste_the_new_token_here
 
 - Try running the same command from Step 5 again (vault kv get secret/database-admin) — it still works, because the token is still valid. Now wait 2 minutes, doing nothing, and run the exact same command again. This time, it should fail with a permission/expired error — that expiration failure is Just-in-Time access working exactly as designed. Switch back to your Root Token afterward (repeat the set/export command from Step 3) to keep going.
+
+# Step 7 — Review the audit log (simulating PSM session recording)
+
+- Real PAM tools log every single access event. Let's turn that on and see it for ourselves. Back in your second terminal window (with the Root Token active again), type:
+
+   Windows:
+
+      vault audit enable file file_path=C:\vault\vault-audit.log
+
+   Mac:
+
+      vault audit enable file file_path=/tmp/vault-audit.log
+
+- Now repeat the retrieval from Step 5 one more time:
+
+      vault kv get secret/database-admin
+
+- Then open the log file to see what got recorded:
+
+
+  Windows: type "notepad C:\vault\vault-audit.log"
+  and press Enter
+  Mac: "type cat /tmp/vault-audit.log " and press Enter
+
+- You'll see a dense block of JSON text — don't worry about reading every field. Just notice: every single retrieval you just performed is permanently recorded, including the time it happened. This is the exact same principle as CyberArk's PSM session recording, just in log form instead of video form.
+
+# Step 8 — Shut everything down
+
+Go back to your first terminal window (the one still running vault server -dev) and press Ctrl + C to stop the server. Everything you built was local and temporary — closing it removes the dev server completely, which is expected and fine for a learning setup like this.
+
+# Where i got interested and went in more
+
+- Added these 4 things:
+
+
+  Create two identities: admin, operator
+
+  Give them different Vault policies: Admin can manage the secret; Operator can retrieve it but cannot modify it.
+
+  Demonstrate token lifecycle
+
+     Login/authenticate
+
+     Receive token
+Use token
+Show TTL/expiration
+Let it expire or revoke it
+Demonstrate that access subsequently fails.
+Show the audit trail
+Authentication event
+Secret read
+Token issuance/use
+Failed unauthorized attempt
+Token revocation/expiration
+
+can i implement this suggestion in this project
