@@ -3,7 +3,7 @@ I can't get a full CyberArk license for free, but you can build a scaled-down, c
 
 As a beginner and intermediate learner in IAM, Initially the plan was to build a Vault issue you a temporary access token, and review the audit log of everything that happened — recreating the Vault + CPM + PSM logging concepts but getting into the project, it gets developed to big. 
 
-# What I/you'll build:
+# What I / you'll build:
 A running Vault server on your own computer, where you'll store a "secret" (a fake privileged password), retrieve it through the proper controlled process (not just reading a file), watch Vault issue you a temporary access token, and review the audit log of everything that happened — recreating the Vault + CPM + PSM logging concepts.
 
 By the end, you've hands-on demonstrated all four PAM pillars in a real, running system: vaulting a credential instead of leaving it in plain text, retrieving it through a controlled interface instead of direct access, issuing just-in-time, expiring access instead of standing permanent access, and generating a genuine audit log of every access event — the same core architecture CyberArk (Chapter 20) implements at enterprise scale.
@@ -19,23 +19,24 @@ On Windows:
 - Open your Start menu, type cmd, and open Command Prompt
 - Type this and press Enter to move into that folder:
 
-   cd C:\vault
+      cd C:\vault
 
 On Mac:
 
 - Open your terminal (Cmd+Space, type terminal, press Enter)
 - If you don't already have Homebrew (a package installer for Mac), install it by typing:
-   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+      bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
 and pressing Enter, then following any on-screen prompts 3. 
 - Once Homebrew is ready, type:
 
-   brew tap hashicorp/tap
-   brew install hashicorp/tap/vault
+      brew tap hashicorp/tap
+      brew install hashicorp/tap/vault
 
 - Check it worked (both systems): type this and press Enter:
 
-   vault --version
+      vault --version
 
 - You should see a version number printed. If you get an error on Windows, make sure you're still inside the C:\vault folder (type cd C:\vault again) and try " vault.exe --version " instead.
 
@@ -44,7 +45,7 @@ and pressing Enter, then following any on-screen prompts 3.
 - Type this and press Enter:
 
 
-   vault server -dev
+      vault server -dev
 
 - Leave this window open — this is your running Vault server, similar to leaving the OAuth project's server running in Part 2. You'll see a wall of text print out, including two important lines:
 
@@ -64,21 +65,15 @@ In this new window, tell it where your Vault server is and log in using the Root
 - Windows (Command Prompt):
 
 
-  set VAULT_ADDR=http://127.0.0.1:8200
-
-
-  set VAULT_TOKEN=paste_your_root_token_here
-
-
-  cd C:\vault
+      set VAULT_ADDR=http://127.0.0.1:8200
+      set VAULT_TOKEN=paste_your_root_token_here
+      cd C:\vault
 
 - Mac (Terminal):
 
 
-  export VAULT_ADDR=http://127.0.0.1:8200
-
-
-  export VAULT_TOKEN=paste_your_root_token_here
+      export VAULT_ADDR=http://127.0.0.1:8200
+      export VAULT_TOKEN=paste_your_root_token_here
 
 # Step 4 — Store your first "privileged secret"
 
