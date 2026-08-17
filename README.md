@@ -148,7 +148,7 @@ Go back to your first terminal window (the one still running vault server -dev) 
 
 # Where i got interested and went in more
 
-- Added these 4 things:
+Added these 4 things:
 
 
 Create two identities: 
@@ -175,7 +175,7 @@ Show the audit trail
     Failed unauthorized attempt
     Token revocation/expiration
 
-- Here's how each piece maps to the UI (http://127.0.0.1:8200, logged in with your Root Token):
+Here's how each piece maps to the UI (http://127.0.0.1:8200, logged in with your Root Token):
 
 1. Create the two policies
 
